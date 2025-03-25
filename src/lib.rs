@@ -65,11 +65,11 @@ impl CScope {
     }
 
     pub fn add_libinclude(&mut self, libname: String) {
-        self.snippets.push(CSnippet::LibInclude(libname.into()));
+        self.snippets.push(CSnippet::LibInclude(libname));
     }
 
     pub fn add_fileinclude(&mut self, filename: String) {
-        self.snippets.push(CSnippet::FileInclude(filename.into()));
+        self.snippets.push(CSnippet::FileInclude(filename));
     }
 
     pub fn add_fn_decl(&mut self, inst: CFnDecl) {
@@ -101,10 +101,8 @@ impl std::fmt::Display for CScope {
             writeln!(f, "{}", s)?;
         }
 
-        if let Some(guards) = &self.include_guards {
-            if let CIncludeGuards::String(s) = guards {
-                writeln!(f, "#endif /* {} */", s)?;
-            }
+        if let Some(CIncludeGuards::String(s)) = &self.include_guards {
+            writeln!(f, "#endif /* {} */", s)?;
         }
         Ok(())
     }
