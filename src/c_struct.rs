@@ -1,9 +1,9 @@
-use crate::{CArraySize, CTypedefKind, CTypeDecl};
+use crate::{CTypedefKind, CVarDecl};
 
 pub struct CStruct {
     name: String,
     typedef: Option<CTypedefKind>,
-    members: Vec<CTypeDecl>,
+    members: Vec<CVarDecl>,
 }
 
 impl CStruct {
@@ -21,11 +21,11 @@ impl CStruct {
     }
 
     pub fn member(mut self, type_: impl Into<String>, name: impl Into<String>) -> Self {
-        self.members.push(CTypeDecl::new(type_, name));
+        self.members.push(CVarDecl::new(type_, name));
         self
     }
 
-    pub fn add_member(&mut self, member: CTypeDecl) {
+    pub fn add_member(&mut self, member: CVarDecl) {
         self.members.push(member);
     }
 }
@@ -43,7 +43,7 @@ impl std::fmt::Display for CStruct {
         }
 
         for m in &self.members {
-            writeln!(f, "    {}", m)?;
+            writeln!(f, "    {};", m)?;
         }
 
         if let Some(td) = &self.typedef {
@@ -73,11 +73,11 @@ mod test {
         let mut struct_inst = CStruct::new("struct_foo")
             .as_typedef(CTypedefKind::explicit("foo"))
             .member("uint8_t", "a");
-        let b = CTypeDecl::new("uint16_t", "b").sized_array(35);
+        let b = CVarDecl::new("uint16_t", "b").sized_array(35);
         struct_inst.add_member(b);
-        let name = CTypeDecl::new("char *", "name").const_();
+        let name = CVarDecl::new("char *", "name").const_();
         struct_inst.add_member(name);
-        let c = CTypeDecl::new("int", "c").const_().unsized_array();
+        let c = CVarDecl::new("int", "c").const_().unsized_array();
         struct_inst.add_member(c);
         assert_eq!(expected.to_string(), struct_inst.to_string());
     }

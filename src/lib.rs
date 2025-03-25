@@ -4,6 +4,8 @@ pub mod c_enum;
 pub use c_enum::*;
 pub mod c_fn;
 pub use c_fn::*;
+pub mod c_var;
+pub use c_var::*;
 
 #[derive(Default)]
 pub struct CScope {
@@ -69,6 +71,18 @@ impl CScope {
     pub fn add_fileinclude(&mut self, filename: String) {
         self.snippets.push(CSnippet::FileInclude(filename.into()));
     }
+
+    pub fn add_fn_decl(&mut self, inst: CFnDecl) {
+        self.snippets.push(CSnippet::FnDecl(inst));
+    }
+
+    pub fn add_fn_impl(&mut self, inst: CFnImpl) {
+        self.snippets.push(CSnippet::FnImpl(inst));
+    }
+
+    pub fn add_global_var(&mut self, inst: CVar) {
+        self.snippets.push(CSnippet::GlobalVar(inst));
+    }
 }
 
 impl std::fmt::Display for CScope {
@@ -81,6 +95,10 @@ impl std::fmt::Display for CScope {
                     writeln!(f, "#define {}", s)?;
                 }
             }
+        }
+
+        for s in &self.snippets {
+            writeln!(f, "{}", s)?;
         }
 
         if let Some(guards) = &self.include_guards {
@@ -108,15 +126,24 @@ pub enum CSnippet {
     GlobalVar(CVar),
 }
 
-pub struct CVar {
-    name: String,
-    type_: String,
-    storage: Option<CStorageClass>,
-    init: Option<String>,
-    array: Option<CArraySize>,
-    const_: bool,
+impl std::fmt::Display for CSnippet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CSnippet::LibInclude(c) => write!(f, "{}", c),
+            CSnippet::FileInclude(c) => write!(f, "{}", c),
+            CSnippet::Raw(c) => write!(f, "{}", c),
+            CSnippet::Struct(c) => write!(f, "{}", c),
+            CSnippet::Enum(c) => write!(f, "{}", c),
+            CSnippet::FnDecl(c) => write!(f, "{}", c),
+            CSnippet::FnImpl(c) => write!(f, "{}", c),
+            CSnippet::GlobalVar(c) => write!(f, "{}", c),
+        }
+    }
 }
 
+/// Typedef style for struct/enums.
+///
+/// For simple typedefs use raw text.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CTypedefKind {
     /// Same as struct/enum name
@@ -154,7 +181,6 @@ impl CTypedefKind {
     }
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CStorageClass {
     Extern,
@@ -174,58 +200,4 @@ impl std::fmt::Display for CStorageClass {
 pub enum CArraySize {
     Unsized,
     Sized(usize),
-}
-
-pub struct CTypeDecl {
-    name: String,
-    type_: String,
-    array: Option<CArraySize>,
-    const_: bool,
-}
-
-impl CTypeDecl {
-    pub fn new(type_: impl Into<String>, name: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            type_: type_.into(),
-            array: None,
-            const_: false,
-        }
-    }
-
-    pub fn const_(mut self) -> Self {
-        self.const_ = true;
-        self
-    }
-
-    pub fn sized_array(mut self, arraysize: usize) -> Self {
-        self.array = Some(CArraySize::Sized(arraysize));
-        self
-    }
-
-    pub fn unsized_array(mut self) -> Self {
-        self.array = Some(CArraySize::Unsized);
-        self
-    }
-}
-
-impl std::fmt::Display for CTypeDecl {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.const_ {
-            write!(f, "const ")?;
-        }
-
-        write!(f, "{} ", self.type_)?;
-
-        if let Some(a) = &self.array {
-            match a {
-                CArraySize::Sized(s) => write!(f, "{}[{}];", self.name, s)?,
-                CArraySize::Unsized => write!(f, "{}[];", self.name)?,
-            }
-        } else {
-            write!(f, "{};", self.name)?;
-        }
-
-        Ok(())
-    }
 }
