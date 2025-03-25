@@ -199,3 +199,12 @@ pub enum CArraySize {
     Unsized,
     Sized(usize),
 }
+
+impl std::fmt::Display for CArraySize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unsized => write!(f, "[]"),
+            Self::Sized(s) => write!(f, "[{}]", s),
+        }
+    }
+}

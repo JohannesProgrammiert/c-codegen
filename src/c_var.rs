@@ -99,15 +99,10 @@ impl std::fmt::Display for CVarDecl {
             write!(f, "const ")?;
         }
 
-        write!(f, "{} ", self.type_)?;
+        write!(f, "{} {}", self.type_, self.name)?;
 
         if let Some(a) = &self.array {
-            match a {
-                CArraySize::Sized(s) => write!(f, "{}[{}]", self.name, s)?,
-                CArraySize::Unsized => write!(f, "{}[]", self.name)?,
-            }
-        } else {
-            write!(f, "{}", self.name)?;
+            write!(f, "{}", a)?;
         }
 
         Ok(())
